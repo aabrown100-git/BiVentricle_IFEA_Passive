@@ -7,7 +7,7 @@ import vtk
 from vtkmodules.util import numpy_support as vtknp
 import IFEA_io as Iio
 
-def genTar(fname, f_ind, vals, cal_vals):
+def genTar(fname, reference_mesh_path, f_ind, vals, cal_vals):
 
     point0d = vals['point0d']
     point0 = vals['point0']
@@ -34,20 +34,19 @@ def genTar(fname, f_ind, vals, cal_vals):
     # disp_abs = point1 - point0d
 
     k = '%02d' % (f_ind + 1)
-    fname_ref = "05_mesh_ref/"
-    fname_tar = "05_mesh_" + k + "/"
+    fname_tar = "mesh_" + k + "/"
     file_target = fname + fname_tar + "mesh-complete.mesh.vtu"
     file_target_lv = fname + fname_tar + "mesh-surfaces/endo_lv.vtp"
     file_target_rv = fname + fname_tar + "mesh-surfaces/endo_rv.vtp"
-    file_target_top = fname + fname_tar + "mesh-surfaces/top.vtp"
+    file_target_top = fname + fname_tar + "mesh-surfaces/base.vtp"
     file_target_long = fname + fname_tar + "fibersLong.vtu"
     file_target_sheet = fname + fname_tar + "fibersSheet.vtu"
     file_target_epi = fname + fname_tar + "mesh-surfaces/epi.vtp"
     file_target_epi_apex = fname + fname_tar + "mesh-surfaces/epi_apex.vtp"
     file_target_epi_mid = fname + fname_tar + "mesh-surfaces/epi_mid.vtp"
 
-    file_long = fname + fname_ref + "fibersLong.vtu"
-    file_sheet = fname + fname_ref + "fibersSheet.vtu"
+    file_long = reference_mesh_path + "fibersLong.vtu"
+    file_sheet = reference_mesh_path + "fibersSheet.vtu"
 
     if os.path.exists(fname + fname_tar) == False:
         os.mkdir(fname + fname_tar)

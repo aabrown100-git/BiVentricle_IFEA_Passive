@@ -4,6 +4,11 @@ import vtk
 from vtkmodules.util import numpy_support as vtknp
 
 def read_surf(file_name):
+    '''
+    This function reads the surface mesh file and returns the mesh and the 
+    array global node ids (gnode). Note that the array GlobalNodeID is 1-indexed,
+    so the gnode is 0-indexed.
+    '''
     reader = vtk.vtkXMLPolyDataReader()
     reader.SetFileName(file_name)
     reader.Update()

@@ -19,13 +19,32 @@ from scipy.optimize import least_squares
 import GeAlgo as ga
 import time
 
-def Simulations(x):
 
-    if os.path.isdir("05_mesh_00") == False:
-        shutil.copytree("05_mesh_ref", "05_mesh_00")
+
+# ----------------------- Global parameters -------------------------------
+
+# Path to mesh-complete folder (mesh in relaxed/imaged configuration)
+reference_mesh_path = "/Users/aaronbrown/Library/CloudStorage/GoogleDrive-abrown97@stanford.edu/My Drive/Stanford/Marsden Lab/Papers/Patient-specific coupled BiV Paper/Sims/mesh_and_fibers/meshes/truncated_BiV-mesh-complete/"
+
+# Command to run svFSI simulation
+exec_svfsi = "mpiexec -np 4 /Users/aaronbrown/Documents/GitHub/svFSI_vvedula22/build/svFSI-build/bin/svFSI "
+
+
+def Simulations(x):
+    '''
+    Given material parameters x, this function determines the unloaded/reference
+    configuration, using Sellier's method. It then computes the objective function
+    based on the target volumes and control point displacements.
+    
+    This function executes one iteration of the outer optimization loop.
+    '''
+
+    # Copy reference mesh to mesh_00.
+    if os.path.isdir("mesh_00") == False:
+        shutil.copytree(reference_mesh_path, "mesh_00")
 
     # Get material parameters
-    m_a = 10 ** x[0]
+    m_a = 10 ** x[0]    # Convert from log10 to normal
     m_b = x[1]
     m_af = 10 ** x[2]
     m_bf = x[3]
@@ -36,18 +55,21 @@ def Simulations(x):
     m_eta = 400 # 400
     m_E = 1.0e5
 
+    # Store material parameters (optimized and fixed)
     mat_para_opt = np.array([m_a, m_b, m_af, m_bf, m_as, m_bs, m_afs, m_bfs])
     mat_para_fix = np.array([m_eta, m_E])
 
-    # Node index for selected landmarks
-    lv_p_gindex = np.array([3769,2138,1591])
-    rv_p_gindex = np.array([7289,7421,1548])
-    epi_p_gindex = np.array([6314,4259,1353])
+    # Node indices on reference mesh for selected landmarks
+    # TODO: Modify these to be the correct indices. These should be GlobalNodeID-1
+    lv_p_gindex = np.array([3299,2755,413])
+    rv_p_gindex = np.array([657,2836,396])
+    epi_p_gindex = np.array([]) # Not needed
     p_info = [lv_p_gindex, rv_p_gindex, epi_p_gindex]
 
+    # Path to reference meshes warped by image data
     fname = os.getcwd() + "/"
-    imagePath = "morph/"
-    file_index = ["01_RR_70", "02_RR_80", "03_RR_90", "04_RR_99"]
+    imagePath = "../truncated_BiV-mesh-complete_morph/"
+    file_index = ["RR70", "RR80", "RR90", "RR0"]
     file_sub = np.array([0.25,0.5,0.75,1])
 
     r_disp_max = 1
@@ -55,16 +77,17 @@ def Simulations(x):
 
     t = time.time()
 
+    # Inner loop to find stress free configuration
     for f_ind in range(3):
         # f_ind = 3
         print("++++++++++++++++++++++++++++++++++++++")
         print("The " + str(f_ind) + " generation: ")
 
-        runFEA(mat_para_opt, f_ind, mat_para_fix, finalflag)
-        vals = genFEA(fname, f_ind, np.array([1]), p_info)
+        runFEA(mat_para_opt, f_ind, mat_para_fix, exec_svfsi, finalflag)
+        vals = genFEA(fname, reference_mesh_path, f_ind, np.array([1]), p_info)
         imageData = getIMG(imagePath, file_index, vals, p_info)
         cal_vals = CalSF(fname, f_ind, vals, imageData)
-        genTar(fname, f_ind, vals, cal_vals)
+        genTar(fname, reference_mesh_path, f_ind, vals, cal_vals)
         r_disp_max = cal_vals['r_disp_max']
         if r_disp_max < 0.01:
             break
@@ -73,13 +96,13 @@ def Simulations(x):
     print("++++++++++++++++++++++++++++++++++++++")
     print("The final " + str(f_ind) + " generation: ")
     finalflag = True
-    runFEA(mat_para_opt, f_ind, mat_para_fix, finalflag)
-    vals = genFEA(fname, f_ind, file_sub, p_info)
+    runFEA(mat_para_opt, f_ind, mat_para_fix, exec_svfsi, finalflag)
+    vals = genFEA(fname, reference_mesh_path, f_ind, file_sub, p_info)
     cal_vals = Calculation(fname, f_ind, vals, imageData)
 
     k = '%02d' % (f_ind + 1)
-    shutil.rmtree("05_mesh_" + k, ignore_errors=True)
-    print("Elapsed: " + str(time.time() - t))
+    shutil.rmtree("mesh_" + k, ignore_errors=True)
+    print("Elapsed: " + str(time.time() - t) + " seconds")
 
     fit_err = cal_vals['fit_err']
     if np.isnan(fit_err):
@@ -87,26 +110,33 @@ def Simulations(x):
 
     return fit_err
 
+# -------------------------- Main code ----------------------------------------#
+
+# Navigate to the directory of the script
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+# Start timer
 tinit = time.time()
 
-# GA #################################################
-# lower and upper boundaries for parameters
+# -------------------------- Genetic algorithm --------------------------------#
+# Lower and upper bounds for parameters
 # a, b, a_f, b_f, a_s, b_s NOTE: a, a_f, a_s are log10-ed to
 # avoid order effects
 lb = np.array([2,1,3,1,3,1])
 ub = np.array([5,40,6,40,6,40])
 
 algorithm_parameter = {'max_num_iteration': 30,
-                   'population_size':4,
-                   'mutation_probability':0.1,
-                    'mutation_change_generation': 5,
-                    'mutation_change_factor': 1.3}
+                        'population_size':4,
+                        'mutation_probability':0.1,
+                        'mutation_change_generation': 5,
+                        'mutation_change_factor': 1.3}
 
 r = ga.GeAlgo(Simulations, lb, ub, algorithm_parameter)
-# GA #################################################
-# Bayesian ###########################################
+# -----------------------------------------------------------------------------#
 
-# Bayesian ###########################################
+# -------------------------------- Bayesian -----------------------------------#
+
+# ----------------------------------------------------------------------------#
 
 print("Total Elapsed: " + str(time.time() - tinit))
 

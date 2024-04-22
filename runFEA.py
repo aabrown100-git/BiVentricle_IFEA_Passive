@@ -6,7 +6,24 @@ import numpy as np
 import os
 import glob
 
-def runFEA(mat_para_opt, f_ind, mat_para_fix, finalflag):
+def runFEA(mat_para_opt, f_ind, mat_para_fix, exec_svfsi, finalflag):
+    '''
+    Updates the svFSI.inp file with the new material parameters and runs the simulation.
+    Meshes were updated in a previous step.
+    
+    If finalflag is True, the simulation will continue from the previous simulation
+    and the number of time steps will be set to 20.
+
+    Args:
+        - mat_para_opt: list, the material parameters to be optimized
+        - f_ind: int, the index of the current simulation
+        - mat_para_fix: list, the fixed material parameters
+        - exec_svfsi: str, command to run the svFSI simulation
+        - finalflag: bool, flag to indicate if this is the final simulation
+
+ 
+
+    '''
     ######## Generate New svFSI file ##############################
     fname = os.getcwd() + "/"
     m_a = mat_para_opt[0]
@@ -33,8 +50,8 @@ def runFEA(mat_para_opt, f_ind, mat_para_fix, finalflag):
         # if "Constitutive model" in svRead[item]:
         if "Elasticity modulus: " in svRead[item]:
             svRead[item] = "   Elasticity modulus: " + str(m_E) + "\n"
-        if "Viscosity: " in svRead[item]:
-            svRead[item] = "   Viscosity: " + str(m_eta) + "\n"
+        if ("Viscosity: " in svRead[item]) and ("Value" in svRead[item+1]):
+            svRead[item+1] = "      Value: " + str(m_eta) + "\n"
         if " a: " in svRead[item]:
             svRead[item] = "      a: " + str(m_a) + "\n"
         if " b: " in svRead[item]:
@@ -55,15 +72,15 @@ def runFEA(mat_para_opt, f_ind, mat_para_fix, finalflag):
     for item in range(len(svRead)):
         if "Face file path: " in svRead[item]:
             svReadsplt = svRead[item].split("/")
-            svRead[item] = svRead[item].replace(svReadsplt[0], "      Face file path: " + "05_mesh_" + k)
+            svRead[item] = svRead[item].replace(svReadsplt[0], "      Face file path: " + "mesh_" + k)
         if "Mesh file path: " in svRead[item]:
             svReadsplt = svRead[item].split("/")
-            svRead[item] = svRead[item].replace(svReadsplt[0], "      Mesh file path: " + "05_mesh_" + k)
+            svRead[item] = svRead[item].replace(svReadsplt[0], "      Mesh file path: " + "mesh_" + k)
         if "Fiber direction file path: " in svRead[item]:
             svReadsplt = svRead[item].split("/")
-            svRead[item] = svRead[item].replace(svReadsplt[0], "      Fiber direction file path: " + "05_mesh_" + k)
+            svRead[item] = svRead[item].replace(svReadsplt[0], "      Fiber direction file path: " + "mesh_" + k)
         if "Save results in folder: " in svRead[item]:
-            svRead[item] = "Save results in folder: " + "05_mesh_" + k + "result\n"
+            svRead[item] = "Save results in folder: " + "mesh_" + k + "result\n"
 
         if finalflag == True:
             if "Continue previous simulation: " in svRead[item]:
@@ -89,11 +106,11 @@ def runFEA(mat_para_opt, f_ind, mat_para_fix, finalflag):
     #     load_rfileNew.writelines(load_rread)
 
     if finalflag == False:
-        rmfd = glob.glob("05_mesh_" + k + "result/*")
+        rmfd = glob.glob("mesh_" + k + "result/*")
         for f in rmfd:
             os.remove(f)
 
-    os.system("mpiexec -np 8 '/home/lei/svFSI_build_20220823/svFSI-build/bin/svFSI' " + out_name)
+    os.system(exec_svfsi + out_name)
 
     ######## Finish Generate New svFSI file ##############################
 

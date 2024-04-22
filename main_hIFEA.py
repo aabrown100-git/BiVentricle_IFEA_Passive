@@ -18,8 +18,10 @@ plt.style.use('seaborn-whitegrid')
 
 fname = os.getcwd() + "/"
 
-if os.path.isdir("05_mesh_00") == False:
-    shutil.copytree("05_mesh_ref", "05_mesh_00")
+if os.path.isdir("mesh_00") == False:
+    shutil.copytree("mesh_ref", "mesh_00")
+
+exec_svfsi = "mpiexec -np 4 /Users/aaronbrown/Documents/GitHub/svFSI_vvedula22/build/svFSI-build/bin/svFSI "
 
 # Define material parameters
 m_a = 1585
@@ -59,7 +61,7 @@ for f_ind in range(3):
         print("++++++++++++++++++++++++++++++++++++++")
         print("The " + str(f_ind) + " generation: ")
 
-        runFEA(mat_para_opt, f_ind, mat_para_fix, finalflag)
+        runFEA(mat_para_opt, f_ind, mat_para_fix, exec_svfsi, finalflag)
         vals = genFEA(fname, f_ind, np.array([1]), p_info)
         imageData = getIMG(imagePath, file_index, vals, p_info)
         cal_vals = CalSF(fname, f_ind, vals, imageData)
@@ -74,7 +76,7 @@ vals = genFEA(fname, f_ind, file_sub, p_info)
 cal_vals = Calculation(fname, f_ind, vals, imageData)
 
 k = '%02d' % (f_ind + 1)
-shutil.rmtree("05_mesh_" + k, ignore_errors=True)
+shutil.rmtree("mesh_" + k, ignore_errors=True)
 print("Elapsed: " + str(time.time() - t))
 
 print()

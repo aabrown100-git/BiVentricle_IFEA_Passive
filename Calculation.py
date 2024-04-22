@@ -12,9 +12,9 @@ def Calculation(fname, f_ind, vals, imageData):
 
     if f_ind > 0:
         k = '%02d' % (f_ind - 1)
-        fname_result_pre = "05_mesh_" + k + "1/"
+        fname_result_pre = "mesh_" + k + "1/"
     k = '%02d' % (f_ind)
-    fname_result = "05_mesh_" + k + "result/"
+    fname_result = "mesh_" + k + "result/"
 
     r_disp = np.zeros(len(point0d))
     r_pos = point1R - point0d
@@ -44,10 +44,16 @@ def Calculation(fname, f_ind, vals, imageData):
     rv_p_cur = vals['rv_p_cur']
     epi_p_cur = vals['epi_p_cur']
 
-    print(vals['lv_vlm_dat'], vals['lv_vlm_ref'], lv_vlm_cur)
-    print(vals['rv_vlm_dat'], vals['rv_vlm_ref'], rv_vlm_cur)
-    print(lv_vlm_img)
-    print(rv_vlm_img)
+    print("Calculation.py::Calculation(): LV/RV volumes")
+    print('lv_vlm_dat: ', vals['lv_vlm_dat'])
+    print('lv_vlm_ref: ', vals['lv_vlm_ref'])
+    print('lv_vlm_cur: ', lv_vlm_cur)
+    print('lv_vlm_img: ', lv_vlm_img)
+    print('rv_vlm_dat: ', vals['rv_vlm_dat'])
+    print('rv_vlm_ref: ', vals['rv_vlm_ref'])
+    print('rv_vlm_cur: ', rv_vlm_cur)
+    print('rv_vlm_img: ', rv_vlm_img)
+
     lv_p_err = 0
     rv_p_err = 0
     epi_p_err = 0
@@ -56,7 +62,7 @@ def Calculation(fname, f_ind, vals, imageData):
         for j in range(len(lv_p_img[i])):
             lv_p_err = lv_p_err + np.linalg.norm(lv_p_img[i][j, :] - lv_p_cur[i][j, :])
             rv_p_err = rv_p_err + np.linalg.norm(rv_p_img[i][j, :] - rv_p_cur[i][j, :])
-            epi_p_err = epi_p_err + np.linalg.norm(epi_p_img[i][j, :] - epi_p_cur[i][j, :])
+            #epi_p_err = epi_p_err + np.linalg.norm(epi_p_img[i][j, :] - epi_p_cur[i][j, :])
     lv_vlm_err = 0
     rv_vlm_err = 0
     for i in range(len(lv_vlm_img)):

@@ -3,13 +3,13 @@
 
 Continue previous simulation: 0
 Number of spatial dimensions: 3
-Number of time steps: 5 #20000
-Time step size: 0.01715
+Number of time steps: 5 #20
+Time step size: 0.01379
 Spectral radius of infinite time step: 0.50
 Searched file name to trigger stop: STOP_SIM
 
 Save results to VTK format: t
-Save results in folder: 05_mesh_00result
+Save results in folder: mesh_00result
 Name prefix of saved VTK files: result
 Increment in saving VTK files: 1
 Start saving after time step: 1
@@ -24,25 +24,25 @@ Debug: f
 #----------------------------------------------------------------
 # Mesh data
 Add mesh: msh {
-      Mesh file path: 05_mesh_00/mesh-complete.mesh.vtu
+      Mesh file path: mesh_00/mesh-complete.mesh.vtu
    Add face: endo_lv {
-      Face file path: 05_mesh_00/mesh-surfaces/endo_lv.vtp
+      Face file path: mesh_00/mesh-surfaces/endo_lv.vtp
    }
    Add face: top {
-      Face file path: 05_mesh_00/mesh-surfaces/top.vtp
+      Face file path: mesh_00/mesh-surfaces/base.vtp
    }
    Add face: epi_mid {
-      Face file path: 05_mesh_00/mesh-surfaces/epi_mid.vtp
+      Face file path: mesh_00/mesh-surfaces/epi_mid.vtp
    }
    Add face: epi_apex {
-      Face file path: 05_mesh_00/mesh-surfaces/epi_apex.vtp
+      Face file path: mesh_00/mesh-surfaces/epi_apex.vtp
    }
    Add face: endo_rv {
-      Face file path: 05_mesh_00/mesh-surfaces/endo_rv.vtp
+      Face file path: mesh_00/mesh-surfaces/endo_rv.vtp
    }
 
-      Fiber direction file path: 05_mesh_00/fibersLong.vtu
-      Fiber direction file path: 05_mesh_00/fibersSheet.vtu
+      Fiber direction file path: mesh_00/fibersLong.vtu
+      Fiber direction file path: mesh_00/fibersSheet.vtu
    Mesh scale factor: 1
 }
 
@@ -53,24 +53,26 @@ Add equation: ustruct {
    Max iterations: 10
    Tolerance: 1e-4
 
-   Density: 1.055# 5.0e1
-   Elasticity modulus: 1000000.0
+   Density: 1.055# 5.0e1                  # g/cm^3
+   Elasticity modulus: 1000000.0          # dyne/cm^2 = g/(cm s^2)
    Poisson ratio: 0.483333
-   Viscosity: 400.0
+   Viscosity: potential {
+      Value: 400.0                        # dyne s/cm^2 = g/(cm s)
+   }
    
    Momentum stabilization coefficient: 1e-4
    Continuity stabilization coefficient: 0.0
 
    Constitutive model: HO-ma {
-      a: 590.0
-      b: 8.023
-      a4f: 184720.0
-      b4f: 16.026
-      a4s: 24810.0
-      b4s: 11.12
-      afs: 2160.0
-      bfs: 11.436
-      k: 100.0
+      a: 590.0       # dyne/cm^2
+      b: 8.023       # no units
+      a4f: 184720.0  # dyne/cm^2
+      b4f: 16.026    # no units
+      a4s: 24810.0   # dyne/cm^2
+      b4s: 11.12     # no units
+      afs: 2160.0    # dyne/cm^2
+      bfs: 11.436    # no units
+      k: 100.0       # no units
    }
    Dilational penalty model: ST91
 
@@ -82,30 +84,30 @@ Add equation: ustruct {
 
    LS type: GMRES
    {
-      Preconditioner: Trilinos-ILUT
+      Preconditioner: FSILS #Trilinos-ILUT
       Tolerance: 1e-6
-      Max iterations: 100
+      Max iterations: 500
       Krylov space dimension: 50
    }
 
    Add BC: epi_apex {
       Type: Robin
-      Stiffness: 1.0e7
-      Damping: 0.0
+      Stiffness: 1.0e7   # dyne/cm^2
+      Damping: 0.0       # dyne s/cm^2
       Apply along normal direction: t
    }
    
    Add BC: epi_mid {
       Type: Robin
-      Stiffness: 1.0e7
-      Damping: 0.0
+      Stiffness: 1.0e7   # dyne/cm^2
+      Damping: 0.0       # dyne s/cm^2
       Apply along normal direction: t
    }
    
    Add BC: top {
       Type: Robin
-      Stiffness: 1.0e2
-      Damping: 0.0
+      Stiffness: 1.0e2   # dyne/cm^2
+      Damping: 0.0       # dyne s/cm^2
       #Apply along normal direction: t
    }
 
@@ -113,7 +115,7 @@ Add equation: ustruct {
    Add BC: endo_lv {
       Type: Neu
       Time dependence: Unsteady
-      Temporal values file path: pressure_lv_p.dat
+      Temporal values file path: ../pressure/pressure_lv_p.dat
       Ramp function: f
       Follower pressure load: t
    }
@@ -121,7 +123,7 @@ Add equation: ustruct {
    Add BC: endo_rv {
       Type: Neu
       Time dependence: Unsteady
-      Temporal values file path: pressure_rv_p.dat
+      Temporal values file path: ../pressure/pressure_rv_p.dat
       Ramp function: f
       Follower pressure load: t
    }

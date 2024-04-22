@@ -6,12 +6,19 @@ import vtk
 from vtkmodules.util import numpy_support as vtknp
 from FluidVolume import FluidVolume
 
+debug = False
 
 def getIMG(imagePath, file_index, vals, p_info):
     # file_index = ["01_RR_70", "02_RR_80", "03_RR_90", "04_RR_99", "05_RR_10", "06_RR_20", "07_RR_30", "08_RR_40",
     #               "09_RR_50",
     #               "10_RR_60"]
 
+    if debug:
+        print("getIMG(): imagePath = ", imagePath)
+        print("getIMG(): file_index = ", file_index)
+        print("getIMG(): vals = ", vals)
+        print("getIMG(): p_info = ", p_info)
+    
     lv_p_gindex = p_info[0]
     rv_p_gindex = p_info[1]
     epi_p_gindex = p_info[2]
@@ -24,7 +31,9 @@ def getIMG(imagePath, file_index, vals, p_info):
 
     for f_index in range(len(file_index)):
         # LV Volume
-        file_name = imagePath + "endo_lv/" + file_index[f_index] + "_registered.vtk"
+        file_name = imagePath + "endo_lv/" + file_index[f_index] + ".vtk"
+        if debug:
+            print("getIMG(): file_name = ", file_name)
         reader = vtk.vtkUnstructuredGridReader()
         reader.SetFileName(file_name)
         reader.Update()
@@ -54,7 +63,7 @@ def getIMG(imagePath, file_index, vals, p_info):
             lv_p_img[f_index][i, :] = point0img[lv_p_lindex[i], :]
 
         # RV Volume
-        file_name = imagePath + "endo_rv/" + file_index[f_index] + "_registered.vtk"
+        file_name = imagePath + "endo_rv/" + file_index[f_index] + ".vtk"
         reader = vtk.vtkUnstructuredGridReader()
         reader.SetFileName(file_name)
         reader.Update()
@@ -84,7 +93,7 @@ def getIMG(imagePath, file_index, vals, p_info):
             rv_p_img[f_index][i, :] = point0img[rv_p_lindex[i], :]
 
         # epi
-        file_name = imagePath + "epi/" + file_index[f_index] + "_registered.vtk"
+        file_name = imagePath + "epi/" + file_index[f_index] + ".vtk"
         reader = vtk.vtkUnstructuredGridReader()
         reader.SetFileName(file_name)
         reader.Update()
@@ -99,11 +108,11 @@ def getIMG(imagePath, file_index, vals, p_info):
             epi_p_img[f_index][i, :] = point0img[epi_p_lindex[i], :]
 
     imageData = {
-        'lv_vlm_img': lv_vlm_img,
-        'rv_vlm_img': rv_vlm_img,
-        'rv_p_img': rv_p_img,
-        'lv_p_img': lv_p_img,
-        'epi_p_img': epi_p_img,
+        'lv_vlm_img': lv_vlm_img, # LV volume over time (list)
+        'rv_vlm_img': rv_vlm_img, # RV volume over time (list)
+        'rv_p_img': rv_p_img,     # RV control point displacements over time (list)
+        'lv_p_img': lv_p_img,     # LV control point displacements over time (list)
+        'epi_p_img': epi_p_img,   # Epi control point displacements over time (list)
     }
 
     return imageData
